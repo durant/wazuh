@@ -12,7 +12,7 @@
 
 #include "shared.h"
 #include "logcollector.h"
-
+#include "getlog.h"
 
 /* Read syslog files */
 void *read_syslog(logreader *lf, int *rc, int drop_it) {
@@ -20,6 +20,8 @@ void *read_syslog(logreader *lf, int *rc, int drop_it) {
     int __ms_reported = 0;
     char str[OS_MAXSTR + 1];
     fpos_t fp_pos;
+    getlog_t getlog = NULL;
+    getlog_params_t getlog_params = {0};
     int lines = 0;
 #ifdef WIN32
     int64_t offset;
@@ -34,8 +36,20 @@ void *read_syslog(logreader *lf, int *rc, int drop_it) {
 
     /* Get initial file location */
     fgetpos(lf->fp, &fp_pos);
+    getlog_params.stream = lf->fp;
+    getlog_params.length = OS_MAXSTR - OS_LOG_HEADER;
+    getlog_params.buffer = str;
 
-    for (offset = w_ftell(lf->fp); can_read() && fgets(str, OS_MAXSTR - OS_LOG_HEADER, lf->fp) != NULL && (!maximum_lines || lines < maximum_lines) && offset >= 0; offset += rbytes) {
+    if (lf->multiline){
+        getlog = getlog_multiline;
+        getlog_ctxt = lf->multiline;
+    }
+    else{
+        getlog = getlog_singleline;
+        getlog_ctxt = NULL;
+    }
+
+    for (offset = w_ftell(lf->fp); can_read() && (getlog)(&getlog_params) != NULL && (!maximum_lines || lines < maximum_lines) && offset >= 0; offset += rbytes) {
         rbytes = w_ftell(lf->fp) - offset;
         lines++;
 
