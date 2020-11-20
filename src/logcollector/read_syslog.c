@@ -40,16 +40,16 @@ void *read_syslog(logreader *lf, int *rc, int drop_it) {
     getlog_params.length = OS_MAXSTR - OS_LOG_HEADER;
     getlog_params.buffer = str;
 
-    if (lf->multiline){
+    if (lf->multiline) {
         getlog = getlog_multiline;
-        getlog_ctxt = lf->multiline;
-    }
-    else{
+        getlog_params.ctxt = lf->multiline;
+    } else {
         getlog = getlog_singleline;
-        getlog_ctxt = NULL;
+        getlog_params.ctxt = NULL;
     }
 
-    for (offset = w_ftell(lf->fp); can_read() && (getlog)(&getlog_params) != NULL && (!maximum_lines || lines < maximum_lines) && offset >= 0; offset += rbytes) {
+    for (offset = w_ftell(lf->fp); can_read() && (getlog)(&getlog_params) != NULL 
+        && (!maximum_lines || lines < maximum_lines) && offset >= 0; offset += rbytes) {
         rbytes = w_ftell(lf->fp) - offset;
         lines++;
 
