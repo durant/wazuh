@@ -8,14 +8,21 @@
  * Foundation
  */
 
-/* Read the syslog */
-
 #include "shared.h"
 #include "logcollector.h"
 
+#ifdef WAZUH_UNIT_TESTING
+// Remove STATIC qualifier from tests
+#define STATIC
+#else
+#define STATIC static
+#endif
 
-/* Read syslog files */
-void *read_syslog(logreader *lf, int *rc, int drop_it) {
+STATIC char * multiline_getlog(char * buffer, int length, FILE * stream, w_multiline_config_t * ml_cfg);
+STATIC void multiline_replace(char * buffer, w_multiline_replace_type_t type);
+STATIC char * remove_char(char * str, const char * find);
+
+void *read_multiline_regex(logreader *lf, int *rc, int drop_it) {
     int __ms = 0;
     int __ms_reported = 0;
     char str[OS_MAXSTR + 1];
@@ -35,7 +42,9 @@ void *read_syslog(logreader *lf, int *rc, int drop_it) {
     /* Get initial file location */
     fgetpos(lf->fp, &fp_pos);
 
-    for (offset = w_ftell(lf->fp); can_read() && fgets(str, OS_MAXSTR - OS_LOG_HEADER, lf->fp) != NULL && (!maximum_lines || lines < maximum_lines) && offset >= 0; offset += rbytes) {
+    for (offset = w_ftell(lf->fp); can_read() 
+        && multiline_getlog(str, OS_MAXSTR - OS_LOG_HEADER, lf->fp, lf->multiline) != NULL 
+        && (!maximum_lines || lines < maximum_lines) && offset >= 0; offset += rbytes) {
         rbytes = w_ftell(lf->fp) - offset;
         lines++;
 
@@ -94,7 +103,7 @@ void *read_syslog(logreader *lf, int *rc, int drop_it) {
         }
 #endif
 
-        mdebug2("Reading syslog message: '%.*s'%s", sample_log_length, str, rbytes > sample_log_length ? "..." : "");
+        mdebug2("Reading multi-line-regex message: '%.*s'%s", sample_log_length, str, rbytes > sample_log_length ? "..." : "");
 
         /* Send message to queue */
         if (drop_it == 0) {
@@ -131,6 +140,74 @@ void *read_syslog(logreader *lf, int *rc, int drop_it) {
         continue;
     }
 
-    mdebug2("Read %d lines from %s", lines, lf->file);
-    return (NULL);
+        mdebug2("Read %d lines from %s", lines, lf->file);
+        return (NULL);
+}
+
+STATIC char * remove_char(char * str, const char * find) {
+    char * c;
+    char * d;
+
+    if (str != NULL) {
+        str = &str[strspn(str, find)];
+        for (c = str + strcspn(str, find); *(d = c + strspn(c, find)); c = d + strcspn(d, find))
+            ;
+        *c = '\0';
+    }
+    return str;
+}
+
+
+STATIC char * multiline_getlog(char * buffer, int length, FILE * stream, w_multiline_config_t * ml_cfg) {
+
+    char * str = buffer;
+    int offset, chunk_sz;
+    long pos = ftell(stream);
+    bool already_match = false;
+
+    for (*str = '\0', offset = 0, chunk_sz = 0, already_match = false; fgets(str, length - offset, stream);
+         str += chunk_sz) {
+
+        pos = w_ftell(stream);
+        chunk_sz = strlen(str);
+        offset += chunk_sz;
+
+        if (already_match ^ w_expression_match(ml_cfg->regex, str, NULL, NULL)) {
+            already_match = true;
+        } else {
+            // Discard the last readed line. It purpose was to detect the end of multiline log
+            buffer[offset - chunk_sz] = '\0';
+            fseek(stream, pos, SEEK_SET);
+            break;
+        }
+    }
+    return buffer;
+}
+
+STATIC void multiline_replace(char * buffer, w_multiline_replace_type_t type) {
+
+#ifndef WIN32
+    const char * newline = "\n";
+#else
+    const char * newline = "\r\n";
+#endif
+    const char * tab = "\t";
+    const char * wspace = " ";
+    switch (type) {
+    case ML_REPLACE_WSPACE:
+        wstr_replace(buffer, newline, wspace);
+        break;
+
+    case ML_REPLACE_TAB:
+        wstr_replace(buffer, newline, tab);
+        break;
+
+    case ML_REPLACE_NONE:
+        remove_char(buffer, newline);
+        break;
+
+    default:
+    case ML_REPLACE_NO_REPLACE:
+        break;
+    }
 }
