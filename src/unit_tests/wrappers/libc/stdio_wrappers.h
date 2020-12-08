@@ -35,4 +35,6 @@ int __wrap_rename(const char *__old, const char *__new);
 
 size_t __wrap_strlen(const char *s);
 
+int __wrap_fgetc(FILE * stream);
+
 #endif

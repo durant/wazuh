@@ -3,7 +3,7 @@
 # Generate msgs tests
 list(APPEND os_crypto_shared_tests_names "test_msgs")
 list(APPEND os_crypto_shared_tests_flags "-Wl,--wrap,merror_exit -Wl,--wrap,isChroot -Wl,--wrap,linked_queue_push_ex -Wl,--wrap,fprintf -Wl,--wrap,fopen -Wl,--wrap,fread -Wl,--wrap,fwrite -Wl,--wrap,fclose -Wl,--wrap,remove \
-                            -Wl,--wrap,_mdebug2 -Wl,--wrap,sleep -Wl,--wrap,fgets -Wl,--wrap,fflush -Wl,--wrap,fseek \
+                            -Wl,--wrap,_mdebug2 -Wl,--wrap,sleep -Wl,--wrap,fgets -Wl,--wrap,fflush -Wl,--wrap,fseek -Wl,--wrap=fgetc \
                             -Wl,--wrap,stat -Wl,--wrap,getpid -Wl,--wrap=key_lock_write -Wl,--wrap=key_unlock -Wl,--wrap=time")
 
 # Compiling tests

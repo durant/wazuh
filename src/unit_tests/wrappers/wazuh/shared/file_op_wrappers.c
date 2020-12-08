@@ -133,3 +133,8 @@ int __wrap_UnmergeFiles(const char *finalpath, const char *optdir, int mode) {
     check_expected(mode);
     return mock();
 }
+
+int64_t __wrap_w_ftell (FILE *x) {
+    check_expected(x);
+    return mock_type(int64_t);
+}

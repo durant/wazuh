@@ -8,7 +8,7 @@ if(NOT ${TARGET} STREQUAL "winagent")
                             -Wl,--wrap,fread,--wrap,fseek,--wrap,fwrite,--wrap,remove \
                             -Wl,--wrap,fprintf,--wrap,fgets,--wrap,File_DateofChange \
                             -Wl,--wrap,bzip2_uncompress,--wrap,mdebug1,--wrap,lstat \
-                            -Wl,--wrap,gzopen,--wrap,gzread,--wrap,gzclose \
+                            -Wl,--wrap,gzopen,--wrap,gzread,--wrap,gzclose -Wl,--wrap=fgetc\
                             -Wl,--wrap,gzeof,--wrap,gzerror,--wrap,gzwrite")
     list(APPEND shared_tests_flags "${FILE_OP_BASE_FLAGS}")
 endif()
@@ -27,7 +27,7 @@ list(APPEND shared_tests_flags "-Wl,--wrap,OS_IsValidIP -Wl,--wrap,OSMatch_Execu
                              -Wl,--wrap,OSRegex_Execute -Wl,--wrap,OSRegex_Execute_ex -Wl,--wrap,OSMatch_Compile")
 
 list(APPEND shared_tests_names "test_version_op")
-set(VERSION_OP_BASE_FLAGS "-Wl,--wrap,fopen -Wl,--wrap,fclose -Wl,--wrap,fflush -Wl,--wrap,fread \
+set(VERSION_OP_BASE_FLAGS "-Wl,--wrap,fopen -Wl,--wrap,fclose -Wl,--wrap,fflush -Wl,--wrap,fread -Wl,--wrap=fgetc\
                            -Wl,--wrap,fseek -Wl,--wrap,fwrite -Wl,--wrap,remove -Wl,--wrap,fprintf -Wl,--wrap,fgets")
 list(APPEND shared_tests_flags "${VERSION_OP_BASE_FLAGS}")
 
@@ -65,7 +65,7 @@ list(APPEND shared_tests_names "test_bzip2_op")
 list(APPEND shared_tests_flags "-Wl,--wrap=fopen,--wrap=fread,--wrap=fclose,--wrap=fwrite,--wrap=BZ2_bzWriteOpen \
                                 -Wl,--wrap=BZ2_bzWriteClose64 -Wl,--wrap=BZ2_bzReadClose,--wrap=BZ2_bzReadOpen \
                                 -Wl,--wrap=BZ2_bzRead,--wrap=BZ2_bzWrite,--wrap=_mdebug2,--wrap=fflush \
-                                -Wl,--wrap=fgets,--wrap=fprintf,--wrap=fseek,--wrap=remove")
+                                -Wl,--wrap=fgets,--wrap=fprintf,--wrap=fseek,--wrap=remove -Wl,--wrap=fgetc")
 
 list(APPEND shared_tests_names "test_schedule_scan")
 list(APPEND shared_tests_flags "-Wl,--wrap=OS_StrIsNum,--wrap=_merror,--wrap=w_time_delay,--wrap=time,--wrap=_mwarn \
@@ -99,7 +99,7 @@ list(APPEND shared_tests_flags "-Wl,--wrap,_merror -Wl,--wrap,_mdebug1 -Wl,--wra
                                 -Wl,--wrap,audit_rule_fieldpair_data -Wl,--wrap,fopen -Wl,--wrap,audit_add_rule_data \
                                 -Wl,--wrap,audit_delete_rule_data -Wl,--wrap,audit_close -Wl,--wrap,fclose \
                                 -Wl,--wrap,fflush -Wl,--wrap,fprintf -Wl,--wrap,fread -Wl,--wrap,fseek \
-                                -Wl,--wrap,fwrite -Wl,--wrap,remove")
+                                -Wl,--wrap,fwrite -Wl,--wrap,remove -Wl,--wrap=fgetc")
 
 list(APPEND shared_tests_names "test_privsep_op")
 list(APPEND shared_tests_flags "-Wl,--wrap=sysconf,--wrap=getpwnam_r,--wrap=getgrnam_r,--wrap=getpid")
